@@ -81,8 +81,8 @@ function initDashboard() {
         }
     });
 
-    // 2. ESCUCHAR HISTORIAL (Solo los últimos 10 eventos)
-    const logsRef = query(ref(db, 'logs'), limitToLast(10));
+    // 2. ESCUCHAR HISTORIAL (Solo los últimos 50 eventos)
+    const logsRef = query(ref(db, 'logs'), limitToLast(50));
     onValue(logsRef, (snapshot) => {
         historyList.innerHTML = ''; // Limpiar lista visual
         const data = snapshot.val();
@@ -96,7 +96,7 @@ function initDashboard() {
                 li.style.borderBottom = "1px solid #333";
                 li.style.padding = "5px 0";
                 // Formato: "tal le sumó a Invitado"
-                li.innerHTML = `<span style="color:#ff4757">${log.attacker}</span> atacó a <span style="color:#4cd137">${log.victim}</span> <small style="color:#666">(${new Date(log.timestamp).toLocaleTimeString()})</small>`;
+                li.innerHTML = `<span style="color:#ff4757">${log.attacker}</span> acusó a <span style="color:#4cd137">${log.victim}</span> <small style="color:#666">(${new Date(log.timestamp).toLocaleTimeString()})</small>`;
                 historyList.appendChild(li);
             });
         }
@@ -125,7 +125,7 @@ function renderUserCard(userId, user) {
 
     const score = user.score || 0;
 
-    // AÑADIDO: data-name en el botón para saber a quién 
+    // AÑADIDO: data-name en el botón para saber a quién se acusó
     card.innerHTML = `
         <h3 style="margin: 0 0 10px 0; color: ${isMe ? '#4cd137' : 'white'}">${user.name} ${isMe ? '(Tú)' : ''}</h3>
         <div style="font-size: 2rem; font-weight: bold; margin-bottom: 10px;">${score}</div>
@@ -137,7 +137,7 @@ function renderUserCard(userId, user) {
 
 // --- EVENTOS ---
 
-// 1.  CON REGISTRO DE HISTORIAL
+// 1.REGISTRO DE HISTORIAL
 usersListContainer.addEventListener('click', (e) => {
     if (e.target.classList.contains('attack-btn')) {
         const targetId = e.target.dataset.uid;
@@ -191,4 +191,5 @@ loginBtn.addEventListener('click', () => {
 if (currentUserId && currentUserName) {
     registerUser(currentUserName);
 }
+
 
