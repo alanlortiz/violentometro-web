@@ -147,15 +147,43 @@ logoutBtn.addEventListener('click', () => {
     location.reload();
 });
 
-// Botón Ingresar
-loginBtn.addEventListener('click', () => {
+// --- MODIFICACIÓN PARA DETECTAR ERRORES ---
+
+loginBtn.addEventListener('click', async () => {
     const name = usernameInput.value.trim();
-    if (name) {
+    
+    if (!name) {
+        alert("¡Escribe un nombre primero!");
+        return;
+    }
+
+    try {
+        alert("1. Intentando conectar... (Si no pasa de aquí, es tu Internet o la API Key)");
+        
+        // Intentamos escribir en Firebase para probar la conexión
+        const testRef = ref(db, '.info/connected');
+        
+        onValue(testRef, (snap) => {
+            if (snap.val() === true) {
+                alert("2. ¡Conexión exitosa con Firebase!");
+                // Si llegamos aquí, procedemos a registrar
+                registerUser(name);
+            } else {
+                console.log("Aun no conecta...");
+            }
+        }, { onlyOnce: true });
+
+        // Forzamos el registro directo para ver si hay error de permisos
         registerUser(name);
+
+    } catch (error) {
+        alert("ERROR FATAL: " + error.message);
+        console.error(error);
     }
 });
 
 // Auto-login al cargar
 if (currentUserId && currentUserName) {
     registerUser(currentUserName);
+
 }
