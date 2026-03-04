@@ -4,10 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Violentómetro Web</title>
-    <link rel="stylesheet" href="style.css?v=1.2">
-
-<script type="module" src="script.js?v=1.2"></script>
-
+    <link rel="stylesheet" href="style.css?v=1.3">
 </head>
 <body>
 
@@ -20,7 +17,7 @@
         </div>
     </div>
 
-<div id="dashboard-screen" class="screen hidden">
+    <div id="dashboard-screen" class="screen hidden">
         <header>
             <span id="user-display">Usuario: ...</span>
             <div>
@@ -30,7 +27,7 @@
         </header>
         
         <div id="history-container" class="hidden" style="background: #222; padding: 15px; margin-bottom: 20px; border-radius: 8px; border: 1px solid #444; max-height: 200px; overflow-y: auto;">
-            <h3 style="margin-top: 0;">Últimos ataques</h3>
+            <h3 style="margin-top: 0; color: #f0f0f0;">Últimos ataques</h3>
             <ul id="history-list" style="list-style: none; padding: 0; font-size: 0.9rem; color: #ccc;">
                 </ul>
         </div>
@@ -38,16 +35,13 @@
         <div class="main-content">
             <h2>Usuarios Activos</h2>
             <div id="users-list" class="grid-container">
-                <p class="loading-text">Cargando...</p>
+                <p class="loading-text">Cargando usuarios...</p>
             </div>
         </div>
 
         <div id="toast-container"></div>
     </div>
 
-    <script type="module" src="script.js"></script>
+    <script type="module" src="script.js?v=1.3"></script>
 </body>
-
 </html>
-
-
