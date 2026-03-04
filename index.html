@@ -17,16 +17,25 @@
         </div>
     </div>
 
-    <div id="dashboard-screen" class="screen hidden">
+<div id="dashboard-screen" class="screen hidden">
         <header>
             <span id="user-display">Usuario: ...</span>
-            <button id="logout-btn" class="secondary-btn">Salir</button>
+            <div>
+                <button id="history-btn" class="secondary-btn" style="margin-right: 10px;">📜 Historial</button>
+                <button id="logout-btn" class="secondary-btn">Salir</button>
+            </div>
         </header>
         
+        <div id="history-container" class="hidden" style="background: #222; padding: 15px; margin-bottom: 20px; border-radius: 8px; border: 1px solid #444; max-height: 200px; overflow-y: auto;">
+            <h3 style="margin-top: 0;">Últimos ataques</h3>
+            <ul id="history-list" style="list-style: none; padding: 0; font-size: 0.9rem; color: #ccc;">
+                </ul>
+        </div>
+
         <div class="main-content">
             <h2>Usuarios Activos</h2>
             <div id="users-list" class="grid-container">
-                <p class="loading-text">Esperando usuarios...</p>
+                <p class="loading-text">Cargando...</p>
             </div>
         </div>
 
@@ -35,4 +44,5 @@
 
     <script type="module" src="script.js"></script>
 </body>
+
 </html>
