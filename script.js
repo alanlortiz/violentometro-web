@@ -1,8 +1,8 @@
-// --- IMPORTACIONES CORRECTAS PARA NAVEGADOR ---
+// --- IMPORTACIONES PARA NAVEGADOR ---
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getDatabase, ref, update, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-// Tu configuración (La dejé tal cual me la pasaste)
+// Tu configuración 
 const firebaseConfig = {
   apiKey: "AIzaSyC8ZPiMupLCq9dQ4sKbpVKpoPl_WTFpkRk",
   authDomain: "violentometro-web.firebaseapp.com",
@@ -15,7 +15,7 @@ const firebaseConfig = {
 
 // Inicializar Firebase
 const app = initializeApp(firebaseConfig);
-const db = getDatabase(app); // Necesitamos iniciar la base de datos
+const db = getDatabase(app); // Iniciar la base de datos
 
 // Referencias del DOM
 const loginScreen = document.getElementById('login-screen');
@@ -35,29 +35,37 @@ let myPreviousScore = 0;
 // --- FUNCIONES PRINCIPALES ---
 
 function registerUser(name) {
-    // Si no tenemos ID, creamos uno único
-    if (!currentUserId) {
-        currentUserId = 'user_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
-        localStorage.setItem('violentometro_uid', currentUserId);
+    // 1. LIMPIEZA DEL NOMBRE
+    const userId = name.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+    if (userId.length < 3) {
+        alert("El nombre es muy corto o tiene caracteres raros.");
+        return;
     }
-    
+
+    // Actualizamos las variables locales
+    currentUserId = userId;
     currentUserName = name;
+    
+    // Guardamos en el navegador (para recordar quién eres al recargar)
+    localStorage.setItem('violentometro_uid', userId);
     localStorage.setItem('violentometro_name', name);
 
-    // Guardar en Firebase
-    const userRef = ref(db, 'users/' + currentUserId);
+    // 2. CONEXIÓN CON FIREBASE
+    const userRef = ref(db, 'users/' + userId);
     
-    // Guardamos nombre y fecha
+    // Usamos 'update' para NO borrar el puntaje si ya existía
     update(userRef, {
         name: name,
         lastActive: Date.now()
+
     })
     .then(() => {
-        console.log("Usuario guardado en Firebase");
+        console.log("Sesión iniciada como:", name);
         initDashboard();
     })
     .catch((error) => {
-        alert("Error al guardar usuario: " + error.message);
+        alert("Error al conectar: " + error.message);
     });
 }
 
@@ -162,4 +170,5 @@ loginBtn.addEventListener('click', () => {
 if (currentUserId && currentUserName) {
     registerUser(currentUserName);
 }
+
 
