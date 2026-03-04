@@ -3,7 +3,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebas
 // Agregamos 'push', 'query', 'limitToLast' para manejar el historial
 import { getDatabase, ref, update, onValue, push, query, limitToLast } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-// --- TU CONFIGURACIÓN (La misma que tenías) ---
+// --- TU CONFIGURACIÓN
 const firebaseConfig = {
   apiKey: "AIzaSyC8ZPiMupLCq9dQ4sKbpVKpoPl_WTFpkRk",
   authDomain: "violentometro-web.firebaseapp.com",
@@ -95,7 +95,7 @@ function initDashboard() {
                 const li = document.createElement('li');
                 li.style.borderBottom = "1px solid #333";
                 li.style.padding = "5px 0";
-                // Formato: "Alan le sumó a Invitado"
+                // Formato: "tal le sumó a Invitado"
                 li.innerHTML = `<span style="color:#ff4757">${log.attacker}</span> atacó a <span style="color:#4cd137">${log.victim}</span> <small style="color:#666">(${new Date(log.timestamp).toLocaleTimeString()})</small>`;
                 historyList.appendChild(li);
             });
@@ -110,7 +110,7 @@ function renderUserCard(userId, user) {
 
     const isMe = userId === currentUserId;
     
-    // Alerta y Vibración si me atacan
+    // Alerta y Vibración
     if (isMe) {
         card.style.borderColor = "#4cd137";
         if (user.score > myPreviousScore && myPreviousScore !== 0) {
@@ -125,7 +125,7 @@ function renderUserCard(userId, user) {
 
     const score = user.score || 0;
 
-    // AÑADIDO: data-name en el botón para saber a quién atacamos
+    // AÑADIDO: data-name en el botón para saber a quién 
     card.innerHTML = `
         <h3 style="margin: 0 0 10px 0; color: ${isMe ? '#4cd137' : 'white'}">${user.name} ${isMe ? '(Tú)' : ''}</h3>
         <div style="font-size: 2rem; font-weight: bold; margin-bottom: 10px;">${score}</div>
@@ -137,7 +137,7 @@ function renderUserCard(userId, user) {
 
 // --- EVENTOS ---
 
-// 1. ATAQUE CON REGISTRO DE HISTORIAL
+// 1.  CON REGISTRO DE HISTORIAL
 usersListContainer.addEventListener('click', (e) => {
     if (e.target.classList.contains('attack-btn')) {
         const targetId = e.target.dataset.uid;
@@ -191,3 +191,4 @@ loginBtn.addEventListener('click', () => {
 if (currentUserId && currentUserName) {
     registerUser(currentUserName);
 }
+
