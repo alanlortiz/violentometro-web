@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Violentómetro Web</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="login-screen" class="screen">
+        <div class="container">
+            <h1>Bienvenido al Violentómetro</h1>
+            <p>Ingresa tu nombre para acceder al sistema.</p>
+            <input type="text" id="username-input" placeholder="Tu nombre..." autocomplete="off">
+            <button id="login-btn">Ingresar</button>
+        </div>
+    </div>
+
+    <div id="dashboard-screen" class="screen hidden">
+        <header>
+            <span id="user-display">Usuario: ...</span>
+            <button id="logout-btn" class="secondary-btn">Salir</button>
+        </header>
+        
+        <div class="main-content">
+            <h2>Usuarios Activos</h2>
+            <div id="users-list" class="grid-container">
+                <p class="loading-text">Esperando usuarios...</p>
+            </div>
+        </div>
+
+        <div id="toast-container"></div>
+    </div>
+
+    <script type="module" src="script.js"></script>
+</body>
+</html>
