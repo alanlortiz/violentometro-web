@@ -1,11 +1,8 @@
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+// --- IMPORTACIONES CORRECTAS PARA NAVEGADOR ---
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getDatabase, ref, update, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+// Tu configuración (La dejé tal cual me la pasaste)
 const firebaseConfig = {
   apiKey: "AIzaSyC8ZPiMupLCq9dQ4sKbpVKpoPl_WTFpkRk",
   authDomain: "violentometro-web.firebaseapp.com",
@@ -16,9 +13,9 @@ const firebaseConfig = {
   measurementId: "G-NHTG5VCSHB"
 };
 
-// Initialize Firebase
+// Inicializar Firebase
 const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+const db = getDatabase(app); // Necesitamos iniciar la base de datos
 
 // Referencias del DOM
 const loginScreen = document.getElementById('login-screen');
@@ -33,12 +30,12 @@ const toastContainer = document.getElementById('toast-container');
 // Estado local
 let currentUserId = localStorage.getItem('violentometro_uid');
 let currentUserName = localStorage.getItem('violentometro_name');
-let myPreviousScore = 0; // Para saber si me sumaron puntos
+let myPreviousScore = 0; 
 
 // --- FUNCIONES PRINCIPALES ---
 
 function registerUser(name) {
-    // Si no tenemos ID, creamos uno único basado en la fecha y un random
+    // Si no tenemos ID, creamos uno único
     if (!currentUserId) {
         currentUserId = 'user_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
         localStorage.setItem('violentometro_uid', currentUserId);
@@ -50,17 +47,18 @@ function registerUser(name) {
     // Guardar en Firebase
     const userRef = ref(db, 'users/' + currentUserId);
     
-    // update: actualiza o crea si no existe. Mantenemos el score si ya existía.
+    // Guardamos nombre y fecha
     update(userRef, {
         name: name,
-        lastActive: Date.now(),
-        // Nota: No sobrescribimos el score aquí para no reiniciarlo a 0 si recarga
+        lastActive: Date.now()
+    })
+    .then(() => {
+        console.log("Usuario guardado en Firebase");
+        initDashboard();
+    })
+    .catch((error) => {
+        alert("Error al guardar usuario: " + error.message);
     });
-
-    // Configurar desconexión (opcional: borrar usuario al salir? Por ahora lo dejamos persistente)
-    // onDisconnect(userRef).remove(); 
-
-    initDashboard();
 }
 
 function initDashboard() {
@@ -79,6 +77,8 @@ function initDashboard() {
                 const user = data[key];
                 renderUserCard(key, user);
             });
+        } else {
+            usersListContainer.innerHTML = '<p>No hay nadie conectado aún.</p>';
         }
     });
 }
@@ -87,7 +87,7 @@ function initDashboard() {
 function renderUserCard(userId, user) {
     const card = document.createElement('div');
     card.className = 'user-card';
-    card.style = "background: #333; padding: 15px; border-radius: 8px; text-align: center; border: 1px solid #444;";
+    card.style = "background: #333; padding: 15px; border-radius: 8px; text-align: center; border: 1px solid #444; margin: 10px;";
 
     // Verificar si soy yo o es otro
     const isMe = userId === currentUserId;
@@ -98,7 +98,7 @@ function renderUserCard(userId, user) {
         if (user.score > myPreviousScore && myPreviousScore !== 0) {
             showToast(`¡Alerta! Te han sumado un punto.`);
         }
-        myPreviousScore = user.score || 0; // Actualizar referencia
+        myPreviousScore = user.score || 0; 
     }
 
     const score = user.score || 0;
@@ -114,13 +114,12 @@ function renderUserCard(userId, user) {
 
 // --- ACCIONES ---
 
-// Detectar clics en botones de ataque (Delegación de eventos)
+// Detectar clics en botones de ataque
 usersListContainer.addEventListener('click', (e) => {
     if (e.target.classList.contains('attack-btn')) {
         const targetId = e.target.dataset.uid;
         const currentScore = parseInt(e.target.dataset.score);
         
-        // Enviar actualización a Firebase
         const targetRef = ref(db, 'users/' + targetId);
         update(targetRef, {
             score: currentScore + 1
@@ -132,10 +131,9 @@ usersListContainer.addEventListener('click', (e) => {
 function showToast(message) {
     const toast = document.createElement('div');
     toast.textContent = message;
-    toast.style = "background: #e74c3c; color: white; padding: 10px 20px; border-radius: 5px; margin-top: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.5); animation: fadein 0.5s, fadeout 0.5s 2.5s;";
+    toast.style = "background: #e74c3c; color: white; padding: 10px 20px; border-radius: 5px; margin-top: 10px; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 1000;";
     toastContainer.appendChild(toast);
 
-    // Eliminar después de 3 segundos
     setTimeout(() => {
         toast.remove();
     }, 3000);
@@ -147,9 +145,8 @@ logoutBtn.addEventListener('click', () => {
     location.reload();
 });
 
-// --- MODIFICACIÓN PARA DETECTAR ERRORES ---
-
-loginBtn.addEventListener('click', async () => {
+// Botón Ingresar (CON DEBUG)
+loginBtn.addEventListener('click', () => {
     const name = usernameInput.value.trim();
     
     if (!name) {
@@ -157,33 +154,12 @@ loginBtn.addEventListener('click', async () => {
         return;
     }
 
-    try {
-        alert("1. Intentando conectar... (Si no pasa de aquí, es tu Internet o la API Key)");
-        
-        // Intentamos escribir en Firebase para probar la conexión
-        const testRef = ref(db, '.info/connected');
-        
-        onValue(testRef, (snap) => {
-            if (snap.val() === true) {
-                alert("2. ¡Conexión exitosa con Firebase!");
-                // Si llegamos aquí, procedemos a registrar
-                registerUser(name);
-            } else {
-                console.log("Aun no conecta...");
-            }
-        }, { onlyOnce: true });
-
-        // Forzamos el registro directo para ver si hay error de permisos
-        registerUser(name);
-
-    } catch (error) {
-        alert("ERROR FATAL: " + error.message);
-        console.error(error);
-    }
+    // Intento directo de registro
+    registerUser(name);
 });
 
 // Auto-login al cargar
 if (currentUserId && currentUserName) {
     registerUser(currentUserName);
-
 }
+
