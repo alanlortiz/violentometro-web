@@ -11,9 +11,15 @@
     <div id="login-screen" class="screen">
         <div class="container">
             <h1>Bienvenido al Violentómetro</h1>
-            <p>Ingresa tu nombre para acceder al sistema.</p>
-            <input type="text" id="username-input" placeholder="Tu nombre..." autocomplete="off">
-            <button id="login-btn">Ingresar</button>
+            <p>Ingresa tu nombre y crea un PIN secreto (4 dígitos) para proteger tu usuario.</p>
+            
+            <div style="margin-bottom: 15px;">
+                <input type="text" id="username-input" placeholder="Tu nombre..." autocomplete="off" style="padding: 10px; border-radius: 5px; border: none;">
+                
+                <input type="password" id="pin-input" placeholder="PIN" maxlength="4" style="width: 60px; padding: 10px; border-radius: 5px; border: none; text-align: center; margin-left: 5px;">
+            </div>
+
+            <button id="login-btn">Ingresar / Registrar</button>
         </div>
     </div>
 
