@@ -96,7 +96,7 @@ function initDashboard() {
                 li.style.borderBottom = "1px solid #333";
                 li.style.padding = "5px 0";
                 // Formato: "tal le sumó a Invitado"
-                li.innerHTML = `<span style="color:#ff4757">${log.attacker}</span> acusó a <span style="color:#4cd137">${log.victim}</span> <small style="color:#666">(${new Date(log.timestamp).toLocaleTimeString()})</small>`;
+                li.innerHTML = `<span style="color:#ff4757">${log.victim}</span> acusó a <span style="color:#4cd137">${log.attacker}</span> <small style="color:#666">(${new Date(log.timestamp).toLocaleTimeString()})</small>`;
                 historyList.appendChild(li);
             });
         }
@@ -191,5 +191,6 @@ loginBtn.addEventListener('click', () => {
 if (currentUserId && currentUserName) {
     registerUser(currentUserName);
 }
+
 
 
