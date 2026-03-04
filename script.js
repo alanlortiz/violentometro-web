@@ -21,7 +21,7 @@ const db = getDatabase(app);
 const loginScreen = document.getElementById('login-screen');
 const dashboardScreen = document.getElementById('dashboard-screen');
 const usernameInput = document.getElementById('username-input');
-const pinInput = document.getElementById('pin-input'); // NUEVO
+const pinInput = document.getElementById('pin-input');
 const loginBtn = document.getElementById('login-btn');
 const logoutBtn = document.getElementById('logout-btn');
 const userDisplay = document.getElementById('user-display');
@@ -36,10 +36,10 @@ let currentUserId = null;
 let currentUserName = null;
 let myPreviousScore = 0; 
 
-// --- FUNCIONES DE SEGURIDAD ---
+// --- 1. LÓGICA DE LOGIN Y SEGURIDAD ---
 
 async function handleLogin(name, pin) {
-    // 1. Validaciones básicas
+    // Validaciones
     const userId = name.toLowerCase().replace(/[^a-z0-9]/g, '');
     
     if (userId.length < 3) {
@@ -51,64 +51,59 @@ async function handleLogin(name, pin) {
         return;
     }
 
-    // 2. Verificar en la Base de Datos si el usuario existe
+    // Verificar en BD
     const dbRef = ref(db);
-    
     try {
         const snapshot = await get(child(dbRef, `users/${userId}`));
         
         if (snapshot.exists()) {
-            // A) EL USUARIO YA EXISTE: Verificar PIN
+            // Usuario existe: Verificar PIN
             const userData = snapshot.val();
-            
-            
             if (userData.pin && userData.pin !== pin) {
-                alert("⛔ ERROR: El PIN es incorrecto para este usuario. Si no eres " + name + ", usa otro nombre.");
-                return; // DETENER AQUÍ
+                alert("⛔ PIN INCORRECTO. Si no eres " + name + ", usa otro nombre.");
+                return;
             }
-            
-            // PIN Correcto: Proceder
             loginUser(userId, name, pin);
-            
         } else {
-            // B) USUARIO NUEVO: Registrarlo con el PIN
-            if(confirm(`¿Quieres crear el usuario "${name}" con este PIN?`)) {
+            // Usuario nuevo: Crear
+            if(confirm(`¿Crear usuario "${name}" con este PIN?`)) {
                 loginUser(userId, name, pin);
             }
         }
     } catch (error) {
         console.error(error);
-        alert("Error de conexión al verificar usuario.");
+        alert("Error de conexión.");
     }
 }
 
 function loginUser(userId, name, pin) {
-    // Guardar en local
     currentUserId = userId;
     currentUserName = name;
+    
+    // Guardar sesión local
     localStorage.setItem('v_uid', userId);
     localStorage.setItem('v_name', name);
-    localStorage.setItem('v_pin', pin); // Guardamos PIN para auto-login futuro
+    localStorage.setItem('v_pin', pin);
 
-    // Guardar/Actualizar en Firebase (incluyendo el PIN)
+    // Guardar en Firebase
     const userRef = ref(db, 'users/' + userId);
     update(userRef, {
         name: name,
-        pin: pin, // GUARDAMOS EL SECRETO
+        pin: pin,
         lastActive: Date.now()
     }).then(() => {
         initDashboard();
     });
 }
 
-// --- FUNCIONES DEL DASHBOARD ---
+// --- 2. LÓGICA DEL DASHBOARD ---
 
 function initDashboard() {
     loginScreen.classList.add('hidden');
     dashboardScreen.classList.remove('hidden');
     userDisplay.textContent = `Soy: ${currentUserName}`;
 
-    // Escuchar usuarios
+    // A) Escuchar lista de usuarios
     onValue(ref(db, 'users'), (snapshot) => {
         usersListContainer.innerHTML = '';
         const data = snapshot.val();
@@ -119,7 +114,7 @@ function initDashboard() {
         }
     });
 
-    // Escuchar historial
+    // B) Escuchar Historial (Logs)
     const logsRef = query(ref(db, 'logs'), limitToLast(10));
     onValue(logsRef, (snapshot) => {
         historyList.innerHTML = ''; 
@@ -130,7 +125,10 @@ function initDashboard() {
                 const li = document.createElement('li');
                 li.style.borderBottom = "1px solid #333";
                 li.style.padding = "5px 0";
-                li.innerHTML = `<span style="color:#ff4757">${log.attacker}</span> atacó a <span style="color:#4cd137">${log.victim}</span>`;
+                
+                // FORMATO: [Víctima Verde] reportó a [Agresor Rojo]
+                li.innerHTML = `<span style="color:#4cd137">${log.victim}</span> reportó a <span style="color:#ff4757">${log.attacker}</span>`;
+                
                 historyList.appendChild(li);
             });
         }
@@ -144,10 +142,11 @@ function renderUserCard(userId, user) {
 
     const isMe = userId === currentUserId;
     
+    
     if (isMe) {
         card.style.borderColor = "#4cd137";
         if (user.score > myPreviousScore && myPreviousScore !== 0) {
-            showToast(`¡Alerta! Te han sumado un punto.`);
+            showToast(`¡Alerta! Te han reportado.`);
             if ("vibrate" in navigator) navigator.vibrate([200, 100, 200]);
         }
         myPreviousScore = user.score || 0; 
@@ -155,31 +154,36 @@ function renderUserCard(userId, user) {
 
     const score = user.score || 0;
 
+    
     card.innerHTML = `
         <h3 style="margin: 0 0 10px 0; color: ${isMe ? '#4cd137' : 'white'}">${user.name} ${isMe ? '(Tú)' : ''}</h3>
         <div style="font-size: 2rem; font-weight: bold; margin-bottom: 10px;">${score}</div>
-        ${!isMe ? `<button class="attack-btn" data-uid="${userId}" data-name="${user.name}" data-score="${score}">+1 Violencia</button>` : ''}
+        ${!isMe ? `<button class="attack-btn" data-uid="${userId}" data-name="${user.name}" data-score="${score}">Reportar Violencia</button>` : ''}
     `;
     usersListContainer.appendChild(card);
 }
 
-// --- EVENTOS ---
+// --- 3. EVENTOS ---
 
 usersListContainer.addEventListener('click', (e) => {
     if (e.target.classList.contains('attack-btn')) {
         const targetId = e.target.dataset.uid;
-        const targetName = e.target.dataset.name;
+        const targetName = e.target.dataset.name; 
         const currentScore = parseInt(e.target.dataset.score);
         
+        // 1. Sumamos punto al usuario de la tarjeta 
         update(ref(db, 'users/' + targetId), { score: currentScore + 1 });
+
+        // 2. Guardamos en el historial
         push(ref(db, 'logs'), {
-            attacker: currentUserName,
-            victim: targetName,
+            attacker: targetName,      
+            victim: currentUserName,   
             timestamp: Date.now()
         });
     }
 });
 
+// Botón Historial
 historyBtn.addEventListener('click', () => {
     if (historyContainer.classList.contains('hidden')) {
         historyContainer.classList.remove('hidden');
@@ -190,6 +194,7 @@ historyBtn.addEventListener('click', () => {
     }
 });
 
+// Notificación Flotante
 function showToast(message) {
     const toast = document.createElement('div');
     toast.textContent = message;
@@ -198,34 +203,32 @@ function showToast(message) {
     setTimeout(() => { toast.remove(); }, 3000);
 }
 
+// Botón Salir
 logoutBtn.addEventListener('click', () => {
     localStorage.clear();
     location.reload();
 });
 
-// NUEVO: LOGIN CON PIN
+// Botón Ingresar
 loginBtn.addEventListener('click', () => {
     const name = usernameInput.value.trim();
     const pin = pinInput.value.trim();
-    
     if (name && pin) {
         handleLogin(name, pin);
     } else {
-        alert("Por favor ingresa nombre y PIN");
+        alert("Ingresa nombre y PIN");
     }
 });
 
-// Auto-login (Ahora verificamos también el PIN guardado)
+// Auto-login al cargar
 window.addEventListener('DOMContentLoaded', () => {
     const savedId = localStorage.getItem('v_uid');
     const savedName = localStorage.getItem('v_name');
     const savedPin = localStorage.getItem('v_pin');
 
     if (savedId && savedName && savedPin) {
-        
         currentUserId = savedId;
         currentUserName = savedName;
         initDashboard();
     }
 });
-
