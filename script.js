@@ -228,3 +228,4 @@ window.addEventListener('DOMContentLoaded', () => {
         initDashboard();
     }
 });
+
