@@ -4,7 +4,7 @@ import { getDatabase, ref, update, onValue, push, query, limitToLast, get, child
 
 // --- CONFIGURACIÓN ---
 const firebaseConfig = {
-  apiKey: "AIzaSbpVKpoPl_WTFpkRk",
+  apiKey: "AIzaSyC8ZPiMupLCq9dQ4sKbpVKpoPl_WTFpkRk",
   authDomain: "violentometro-web.firebaseapp.com",
   projectId: "violentometro-web",
   storageBucket: "violentometro-web.firebasestorage.app",
@@ -212,3 +212,4 @@ function showToast(message) {
     toast.style = "background: #e74c3c; color: white; padding: 10px 20px; border-radius: 5px; margin-top: 10px; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 1000;";
     toastContainer.appendChild(toast);
     setTimeout(() => { toast.remove
+
