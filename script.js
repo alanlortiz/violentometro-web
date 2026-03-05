@@ -1,6 +1,8 @@
 // --- IMPORTACIONES  ---
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getDatabase, ref, update, onValue, push, query, limitToLast, get, child, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+//import { getDatabase, ref, update, onValue, push, query, limitToLast, get, child, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+import { getDatabase, ref, update, onValue, push, query, limitToLast, get, child, serverTimestamp, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
 // --- CONFIGURACIÓN ---
 const firebaseConfig = {
@@ -16,6 +18,13 @@ const firebaseConfig = {
 // Inicializar
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
+
+// --- 2. AGREGA ESTO TEMPORALMENTE ---
+// Esta línea borrará TODA la carpeta logs en cuanto entre alguien
+remove(ref(db, 'logs'))
+    .then(() => { console.log("✅ ¡LIMPIEZA COMPLETADA! Logs borrados."); })
+    .catch((error) => { console.error("❌ Error al borrar:", error); });
+// ------------------------------------
 
 // Referencias del DOM
 const loginScreen = document.getElementById('login-screen');
@@ -243,3 +252,4 @@ window.addEventListener('DOMContentLoaded', () => {
         initDashboard();
     }
 });
+
