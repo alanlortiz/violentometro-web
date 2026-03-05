@@ -1,4 +1,4 @@
-// --- IMPORTACIONES ---
+// --- IMPORTACIONES  ---
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getDatabase, ref, update, onValue, push, query, limitToLast, get, child, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
@@ -60,7 +60,7 @@ async function handleLogin(name, pin) {
             // Usuario existe: Verificar PIN
             const userData = snapshot.val();
             if (userData.pin && userData.pin !== pin) {
-                alert("PIN INCORRECTO. Si no eres " + name + ", usa otro nombre.");
+                alert("⛔ PIN INCORRECTO. Si no eres " + name + ", usa otro nombre.");
                 return;
             }
             loginUser(userId, name, pin);
@@ -85,7 +85,7 @@ function loginUser(userId, name, pin) {
     localStorage.setItem('v_name', name);
     localStorage.setItem('v_pin', pin);
 
-    // Guardar en Firebase (Con serverTimestamp para pasar la validación)
+    // Guardar en Firebase 
     const userRef = ref(db, 'users/' + userId);
     update(userRef, {
         name: name,
@@ -174,13 +174,13 @@ usersListContainer.addEventListener('click', (e) => {
         const currentScore = parseInt(e.target.dataset.score);
         
         // 1. Sumamos punto Y actualizamos lastActive con serverTimestamp
-        // (Esto es obligatorio para pasar la regla de seguridad del "Enfriamiento")
+
         update(ref(db, 'users/' + targetId), { 
             score: currentScore + 1,
             lastActive: serverTimestamp() 
         })
         .then(() => {
-            // SOLO SI FUNCIONA, guardamos el log
+            // SOLO SI FUNCIONA (Si pasaron los segundos), guardamos el log
             push(ref(db, 'logs'), {
                 attacker: targetName,      
                 victim: currentUserName,   
@@ -189,7 +189,7 @@ usersListContainer.addEventListener('click', (e) => {
         })
         .catch((error) => {
             // Si intenta votar muy rápido, cae aquí
-            showToast("¡Espera! Debes esperar votos.");
+            showToast("¡Espera! Debes esperar entre votos.");
         });
     }
 });
@@ -211,5 +211,35 @@ function showToast(message) {
     toast.textContent = message;
     toast.style = "background: #e74c3c; color: white; padding: 10px 20px; border-radius: 5px; margin-top: 10px; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 1000;";
     toastContainer.appendChild(toast);
-    setTimeout(() => { toast.remove
+    setTimeout(() => { toast.remove(); }, 3000);
+}
 
+// Botón Salir
+logoutBtn.addEventListener('click', () => {
+    localStorage.clear();
+    location.reload();
+});
+
+// Botón Ingresar
+loginBtn.addEventListener('click', () => {
+    const name = usernameInput.value.trim();
+    const pin = pinInput.value.trim();
+    if (name && pin) {
+        handleLogin(name, pin);
+    } else {
+        alert("Ingresa nombre y PIN");
+    }
+});
+
+// Auto-login al cargar
+window.addEventListener('DOMContentLoaded', () => {
+    const savedId = localStorage.getItem('v_uid');
+    const savedName = localStorage.getItem('v_name');
+    const savedPin = localStorage.getItem('v_pin');
+
+    if (savedId && savedName && savedPin) {
+        currentUserId = savedId;
+        currentUserName = savedName;
+        initDashboard();
+    }
+});
