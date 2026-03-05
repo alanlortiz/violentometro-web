@@ -1,10 +1,10 @@
-// --- IMPORTACIONES  ---
+// --- IMPORTACIONES ---
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getDatabase, ref, update, onValue, push, query, limitToLast, get, child } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import { getDatabase, ref, update, onValue, push, query, limitToLast, get, child, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-// --- TU CONFIGURACIÓN ---
+// --- CONFIGURACIÓN ---
 const firebaseConfig = {
-  apiKey: "AIzaSyC8ZPiMupLCq9dQ4sKbpVKpoPl_WTFpkRk",
+  apiKey: "AIzaSbpVKpoPl_WTFpkRk",
   authDomain: "violentometro-web.firebaseapp.com",
   projectId: "violentometro-web",
   storageBucket: "violentometro-web.firebasestorage.app",
@@ -60,7 +60,7 @@ async function handleLogin(name, pin) {
             // Usuario existe: Verificar PIN
             const userData = snapshot.val();
             if (userData.pin && userData.pin !== pin) {
-                alert("⛔ PIN INCORRECTO. Si no eres " + name + ", usa otro nombre.");
+                alert("PIN INCORRECTO. Si no eres " + name + ", usa otro nombre.");
                 return;
             }
             loginUser(userId, name, pin);
@@ -85,14 +85,18 @@ function loginUser(userId, name, pin) {
     localStorage.setItem('v_name', name);
     localStorage.setItem('v_pin', pin);
 
-    // Guardar en Firebase
+    // Guardar en Firebase (Con serverTimestamp para pasar la validación)
     const userRef = ref(db, 'users/' + userId);
     update(userRef, {
         name: name,
         pin: pin,
-        lastActive: Date.now()
+        lastActive: serverTimestamp() 
     }).then(() => {
         initDashboard();
+    }).catch(err => {
+        console.error("Error login:", err);
+        
+        initDashboard(); 
     });
 }
 
@@ -142,7 +146,6 @@ function renderUserCard(userId, user) {
 
     const isMe = userId === currentUserId;
     
-    
     if (isMe) {
         card.style.borderColor = "#4cd137";
         if (user.score > myPreviousScore && myPreviousScore !== 0) {
@@ -154,7 +157,6 @@ function renderUserCard(userId, user) {
 
     const score = user.score || 0;
 
-    
     card.innerHTML = `
         <h3 style="margin: 0 0 10px 0; color: ${isMe ? '#4cd137' : 'white'}">${user.name} ${isMe ? '(Tú)' : ''}</h3>
         <div style="font-size: 2rem; font-weight: bold; margin-bottom: 10px;">${score}</div>
@@ -171,14 +173,23 @@ usersListContainer.addEventListener('click', (e) => {
         const targetName = e.target.dataset.name; 
         const currentScore = parseInt(e.target.dataset.score);
         
-        // 1. Sumamos punto al usuario de la tarjeta 
-        update(ref(db, 'users/' + targetId), { score: currentScore + 1 });
-
-        // 2. Guardamos en el historial
-        push(ref(db, 'logs'), {
-            attacker: targetName,      
-            victim: currentUserName,   
-            timestamp: Date.now()
+        // 1. Sumamos punto Y actualizamos lastActive con serverTimestamp
+        // (Esto es obligatorio para pasar la regla de seguridad del "Enfriamiento")
+        update(ref(db, 'users/' + targetId), { 
+            score: currentScore + 1,
+            lastActive: serverTimestamp() 
+        })
+        .then(() => {
+            // SOLO SI FUNCIONA, guardamos el log
+            push(ref(db, 'logs'), {
+                attacker: targetName,      
+                victim: currentUserName,   
+                timestamp: serverTimestamp()
+            });
+        })
+        .catch((error) => {
+            // Si intenta votar muy rápido, cae aquí
+            showToast("¡Espera! Debes esperar votos.");
         });
     }
 });
@@ -200,35 +211,4 @@ function showToast(message) {
     toast.textContent = message;
     toast.style = "background: #e74c3c; color: white; padding: 10px 20px; border-radius: 5px; margin-top: 10px; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 1000;";
     toastContainer.appendChild(toast);
-    setTimeout(() => { toast.remove(); }, 3000);
-}
-
-// Botón Salir
-logoutBtn.addEventListener('click', () => {
-    localStorage.clear();
-    location.reload();
-});
-
-// Botón Ingresar
-loginBtn.addEventListener('click', () => {
-    const name = usernameInput.value.trim();
-    const pin = pinInput.value.trim();
-    if (name && pin) {
-        handleLogin(name, pin);
-    } else {
-        alert("Ingresa nombre y PIN");
-    }
-});
-
-// Auto-login al cargar
-window.addEventListener('DOMContentLoaded', () => {
-    const savedId = localStorage.getItem('v_uid');
-    const savedName = localStorage.getItem('v_name');
-    const savedPin = localStorage.getItem('v_pin');
-
-    if (savedId && savedName && savedPin) {
-        currentUserId = savedId;
-        currentUserName = savedName;
-        initDashboard();
-    }
-});
+    setTimeout(() => { toast.remove
