@@ -1,7 +1,8 @@
 // --- IMPORTACIONES  ---
+//import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+//import { getDatabase, ref, update, onValue, push, query, limitToLast, get, child, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getDatabase, ref, update, onValue, push, query, limitToLast, get, child, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-
+import { getDatabase, ref, update, onValue, push, query, limitToLast, get, child, serverTimestamp, remove, orderByKey, limitToFirst } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
 // --- CONFIGURACIÓN ---
 const firebaseConfig = {
@@ -217,6 +218,47 @@ function showToast(message) {
     setTimeout(() => { toast.remove(); }, 3000);
 }
 
+
+// --- ZONA DE LIMPIEZA PROFUNDA (BORRAR DESPUÉS DE USAR) ---
+
+async function borrarLogsPorPartes() {
+    console.log("🧹 Iniciando limpieza... Buscando primeros 500 registros...");
+    const logsRef = ref(db, 'logs');
+    
+    // 1. Buscamos solo los primeros 500 logs (un mordisco pequeño)
+    const q = query(logsRef, orderByKey(), limitToFirst(500));
+    
+    try {
+        const snapshot = await get(q);
+        
+        if (!snapshot.exists()) {
+            console.log("✅ ¡LIMPIEZA COMPLETADA! Ya no quedan logs.");
+            alert("¡Base de datos limpia! Ahora borra este código.");
+            return;
+        }
+
+        // 2. Preparamos la orden de borrado para esos 500
+        const updates = {};
+        snapshot.forEach((child) => {
+            updates[child.key] = null; // 'null' significa borrar
+        });
+
+        // 3. Borramos ese lote
+        await update(logsRef, updates);
+        console.log(`🗑️ Borrados ${Object.keys(updates).length} logs... Comiendo siguiente lote...`);
+
+        // 4. REPETIMOS (Recursividad) hasta que no quede nada
+        // Esperamos 1 segundo para no saturar
+        setTimeout(borrarLogsPorPartes, 500);
+
+    } catch (error) {
+        console.error("❌ Error en la limpieza:", error);
+    }
+}
+
+// Ejecutar automáticamente al cargar
+borrarLogsPorPartes();
+
 // Botón Salir
 logoutBtn.addEventListener('click', () => {
     localStorage.clear();
@@ -246,6 +288,7 @@ window.addEventListener('DOMContentLoaded', () => {
         initDashboard();
     }
 });
+
 
 
 
